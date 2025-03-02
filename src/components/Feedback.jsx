@@ -8,7 +8,6 @@ const FeedbackForm = ({ user }) => {
   const [faculties, setFaculties] = useState([]);
 
   useEffect(() => {
-    // Get faculty list
     const facultyList = JSON.parse(localStorage.getItem('faculties')) || [];
     setFaculties(facultyList);
   }, []);

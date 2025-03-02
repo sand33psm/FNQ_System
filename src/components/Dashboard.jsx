@@ -6,7 +6,6 @@ const Dashboard = ({ user }) => {
   const [recentQueries, setRecentQueries] = useState([]);
 
   useEffect(() => {
-    // Initialize faculty data if not present
     if (!localStorage.getItem('faculties')) {
       const dummyFaculties = [
         { id: 1, name: 'Dr. Robert Smith', subject: 'React Fundamentals' },
@@ -49,12 +48,14 @@ const Dashboard = ({ user }) => {
           <h3>Recent Queries</h3>
           {recentQueries.length > 0 ? (
             <ul className="recent-queries">
-              {recentQueries.map(query => (
-                <li key={query.id}>
-                  <strong>{query.title}</strong>
-                  <p>{query.content.substring(0, 100)}...</p>
-                </li>
-              ))}
+              {
+                recentQueries.map(query => (
+                  <li key={query.id}>
+                    <strong>{query.title}</strong>
+                    <p>{query.content.substring(0, 100)}...</p>
+                  </li>
+                ))
+              }
             </ul>
           ) : (
             <p>No recent queries available.</p>

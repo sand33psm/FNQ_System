@@ -9,7 +9,6 @@ const QueryForum = ({ user }) => {
   const [showNewQueryForm, setShowNewQueryForm] = useState(false);
 
   useEffect(() => {
-    // Load queries from localStorage
     const storedQueries = JSON.parse(localStorage.getItem('queries')) || [];
     setQueries(storedQueries);
   }, []);

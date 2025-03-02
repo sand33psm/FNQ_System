@@ -7,7 +7,6 @@ const Login = ({ onLogin }) => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    // Initialize dummy user data if not present
     if (!localStorage.getItem('users')) {
       const dummyUsers = [
         { id: 1, username: 'adi', password: 'test', role: 'trainee', name: 'Adinath Panchal' },

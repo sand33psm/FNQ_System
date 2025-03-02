@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+
 const Navbar = ({ onLogout, user }) => {
   return (
     <nav className="navbar">
