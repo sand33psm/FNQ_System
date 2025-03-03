@@ -1,24 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import "../App.css"
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import "../App.css";
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, loading }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    if (!localStorage.getItem('users')) {
-      const dummyUsers = [
-        { id: 1, username: 'adi', password: 'test', role: 'trainee', name: 'Adinath Panchal' },
-        { id: 2, username: 'sai', password: 'test', role: 'trainee', name: 'Sai Upase' },
-        { id: 3, username: 'shweta', password: 'test', role: 'trainee', name: 'Shweta Jadhav' }
-      ];
-      localStorage.setItem('users', JSON.stringify(dummyUsers));
-      setUsers(dummyUsers);
-    } else {
-      setUsers(JSON.parse(localStorage.getItem('users')));
-    }
+    // Fetch users from an API
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('/user');
+        console.log("res=> ",response);
+        
+        // Map the API response to our user structure
+        const mappedUsers = response.data.slice(0, 3).map(user => ({
+          id: user.id,
+          username: user.username.toLowerCase(),
+          password: 'test', // In a real app, never store passwords in front-end code
+          role: 'trainee',
+          name: user.name
+        }));
+        
+        localStorage.setItem('users', JSON.stringify(mappedUsers));
+        setUsers(mappedUsers);
+        
+        // Add some logging to help you see the mapped users for login
+        console.log('Available users for testing:', 
+          mappedUsers.map(u => ({ username: u.username, password: 'test' }))
+        );
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        // toast.error('Failed to load user data');
+        
+        // Fallback to dummy users if API fails
+        const dummyUsers = [
+          { id: 1, username: 'adi', password: 'test', role: 'trainee', name: 'Adinath Panchal' },
+          { id: 2, username: 'sai', password: 'test', role: 'trainee', name: 'Sai Upase' },
+          { id: 3, username: 'shweta', password: 'test', role: 'trainee', name: 'Shweta Jadhav' }
+        ];
+        localStorage.setItem('users', JSON.stringify(dummyUsers));
+        setUsers(dummyUsers);
+      }
+    };
+    
+    fetchUsers();
   }, []);
 
   const handleSubmit = (e) => {
@@ -31,6 +60,7 @@ const Login = ({ onLogin }) => {
       onLogin(userWithoutPassword);
     } else {
       setError('Invalid username or password');
+      toast.error('Login failed. Please check your credentials.');
       // Clear error after 3 seconds
       setTimeout(() => setError(''), 3000);
     }
@@ -76,9 +106,10 @@ const Login = ({ onLogin }) => {
           
           <button 
             type="submit"
-            className="w-full mt-2 p-4 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-900 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg"
+            disabled={loading}
+            className="w-full mt-2 p-4 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-900 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import "../App.css"
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import "../App.css";
 
 const QueryForum = ({ user }) => {
   const [queries, setQueries] = useState([]);
@@ -8,69 +10,157 @@ const QueryForum = ({ user }) => {
   const [newQueryContent, setNewQueryContent] = useState('');
   const [replyContent, setReplyContent] = useState('');
   const [showNewQueryForm, setShowNewQueryForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
-    const storedQueries = JSON.parse(localStorage.getItem('queries')) || [];
-    setQueries(storedQueries);
-  }, []);
-
-  const handleSubmitQuery = (e) => {
-    e.preventDefault();
-    
-    // Create new query
-    const newQuery = {
-      id: Date.now(),
-      title: newQueryTitle,
-      content: newQueryContent,
-      timestamp: new Date().toISOString(),
-      userId: user.id,
-      userName: user.name,
-      replies: []
+    const fetchQueries = async () => {
+      try {
+        setLoading(true);
+        
+        // Check if we have stored queries
+        const storedQueries = JSON.parse(localStorage.getItem('queries')) || [];
+        
+        if (storedQueries.length > 0) {
+          setQueries(storedQueries);
+        } else {
+          // Fetch queries from API if none exist
+          const response = await axios.get('/posts', { params: { _limit: 10 } });
+          
+          // Transform the API response to match our queries structure
+          const transformedQueries = await Promise.all(response.data.map(async (post) => {
+            // Get some comments for each post to use as replies
+            const commentsRes = await axios.get(`/posts/${post.id}/comments`, { params: { _limit: 3 } });
+            
+            // Transform comments to replies
+            const replies = commentsRes.data.map(comment => ({
+              id: comment.id,
+              content: comment.body,
+              timestamp: new Date(Date.now() - Math.floor(Math.random() * 10000000)).toISOString(),
+              userId: comment.id,
+              userName: comment.name.split(' ')[0]
+            }));
+            
+            return {
+              id: post.id,
+              title: post.title,
+              content: post.body,
+              timestamp: new Date(Date.now() - Math.floor(Math.random() * 20000000)).toISOString(),
+              userId: post.userId,
+              userName: `User ${post.userId}`,
+              replies: replies
+            };
+          }));
+          
+          // Save to localStorage and state
+          localStorage.setItem('queries', JSON.stringify(transformedQueries));
+          setQueries(transformedQueries);
+        }
+        
+        // toast.success('Queries loaded successfully');
+      } catch (error) {
+        console.error('Error fetching queries:', error);
+        // toast.error('Failed to load queries');
+      } finally {
+        setLoading(false);
+      }
     };
     
-    // Save to localStorage
-    const updatedQueries = [...queries, newQuery];
-    setQueries(updatedQueries);
-    localStorage.setItem('queries', JSON.stringify(updatedQueries));
+    fetchQueries();
+  }, []);
+
+  const handleSubmitQuery = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     
-    // Reset form
-    setNewQueryTitle('');
-    setNewQueryContent('');
-    setShowNewQueryForm(false);
+    try {
+      // Create new query
+      const newQuery = {
+        id: Date.now(),
+        title: newQueryTitle,
+        content: newQueryContent,
+        timestamp: new Date().toISOString(),
+        userId: user.id,
+        userName: user.name,
+        replies: []
+      };
+      
+      // Send to API (just for demonstration)
+      await axios.post('/posts', {
+        title: newQueryTitle,
+        body: newQueryContent,
+        userId: user.id
+      });
+      
+      // Save to localStorage
+      const updatedQueries = [...queries, newQuery];
+      setQueries(updatedQueries);
+      localStorage.setItem('queries', JSON.stringify(updatedQueries));
+      
+      // Reset form
+      setNewQueryTitle('');
+      setNewQueryContent('');
+      setShowNewQueryForm(false);
+      
+      toast.success('Your question has been posted');
+    } catch (error) {
+      console.error('Error posting query:', error);
+      toast.error('Failed to post your question. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmitReply = (e) => {
+  const handleSubmitReply = async (e) => {
     e.preventDefault();
     
     if (!selectedQuery) return;
+    setLoading(true);
     
-    // Create new reply
-    const newReply = {
-      id: Date.now(),
-      content: replyContent,
-      timestamp: new Date().toISOString(),
-      userId: user.id,
-      userName: user.name
-    };
-    
-    // Add reply to selected query
-    const updatedQuery = {
-      ...selectedQuery,
-      replies: [...selectedQuery.replies, newReply]
-    };
-    
-    // Update queries list
-    const updatedQueries = queries.map(q => 
-      q.id === selectedQuery.id ? updatedQuery : q
-    );
-    
-    // Save to localStorage and update state
-    setQueries(updatedQueries);
-    setSelectedQuery(updatedQuery);
-    localStorage.setItem('queries', JSON.stringify(updatedQueries));
-    
-    // Reset form
-    setReplyContent('');
+    try {
+      // Create new reply
+      const newReply = {
+        id: Date.now(),
+        content: replyContent,
+        timestamp: new Date().toISOString(),
+        userId: user.id,
+        userName: user.name
+      };
+      
+      // Send to API (just for demonstration)
+      await axios.post(`/posts/${selectedQuery.id}/comments`, {
+        name: user.name,
+        email: 'user@example.com',
+        body: replyContent
+      });
+      
+      // Add reply to selected query
+      const updatedQuery = {
+        ...selectedQuery,
+        replies: [...selectedQuery.replies, newReply]
+      };
+      
+      // Update queries list
+      const updatedQueries = queries.map(q => 
+        q.id === selectedQuery.id ? updatedQuery : q
+      );
+      
+      // Save to localStorage and update state
+      setQueries(updatedQueries);
+      setSelectedQuery(updatedQuery);
+      localStorage.setItem('queries', JSON.stringify(updatedQueries));
+      
+      // Reset form
+      setReplyContent('');
+      
+      toast.success('Your reply has been added');
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      toast.error('Failed to post your reply. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -78,23 +168,66 @@ const QueryForum = ({ user }) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Search and sort functionality
+  const filteredQueries = queries
+    .filter(query => 
+      query.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      query.content.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sortBy === 'newest') {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+      } else if (sortBy === 'oldest') {
+        return new Date(a.timestamp) - new Date(b.timestamp);
+      } else if (sortBy === 'most-replies') {
+        return b.replies.length - a.replies.length;
+      }
+      return 0;
+    });
+
   return (
     <div className="p-8 mt-16">
       <h2 className="text-2xl font-bold text-slate-800 mb-6">Query Forum</h2>
       
-      <div className="mb-6">
+      <div className="mb-6 flex flex-wrap justify-between items-center gap-4">
         <button 
           onClick={() => setShowNewQueryForm(true)}
-          id='post-reply'
+          id='post-query'
           className="bg-blue-500 text-white py-3 px-6 rounded hover:bg-blue-700"
+          disabled={loading}
         >
-          Ask a New Question
+          {loading ? 'Processing...' : 'Ask a New Question'}
         </button>
+        
+        <div className="flex gap-4 flex-wrap">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search questions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="p-2 border border-gray-300 rounded-lg pl-10 focus:border-blue-500 focus:outline-none"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="p-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="most-replies">Most Replies</option>
+          </select>
+        </div>
       </div>
       
       {showNewQueryForm && (
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h3 className="text-xl font-bold mb-4">Ask a New Question</h3>
+          <h3 className="ask-questin-btn text-xl font-bold mb-4 text-black">Ask a New Question</h3>
           <form onSubmit={handleSubmitQuery}>
             <div className="mb-4">
               <label className="block mb-2 font-medium">Title:</label>
@@ -105,6 +238,7 @@ const QueryForum = ({ user }) => {
                 placeholder="Enter a clear, concise title for your question"
                 required
                 className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                disabled={loading}
               />
             </div>
             <div className="mb-4">
@@ -116,16 +250,22 @@ const QueryForum = ({ user }) => {
                 required
                 rows="5"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-y"
+                disabled={loading}
               />
             </div>
             <div className="flex gap-4 mt-4">
-              <button type="submit" className="annonymous-feedback-submit-btn bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700">
-                Post Question
+              <button 
+                type="submit" 
+                className="annonymous-feedback-submit-btn bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? 'Posting...' : 'Post Question'}
               </button>
               <button 
                 type="button" 
                 onClick={() => setShowNewQueryForm(false)}
                 className="annonymous-feedback-submit-btn bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600"
+                disabled={loading}
               >
                 Cancel
               </button>
@@ -134,12 +274,19 @@ const QueryForum = ({ user }) => {
         </div>
       )}
       
+      {loading && !showNewQueryForm && (
+        <div className="text-center p-4">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1 bg-white rounded-lg p-6 shadow-md">
           <h3 className="text-xl font-bold mb-4">All Questions</h3>
-          {queries.length > 0 ? (
+          {filteredQueries.length > 0 ? (
             <ul>
-              {queries.map(query => (
+              {filteredQueries.map(query => (
                 <li 
                   key={query.id} 
                   className={`p-4 border-b cursor-pointer transition-colors hover:bg-gray-50 
@@ -147,7 +294,7 @@ const QueryForum = ({ user }) => {
                   onClick={() => setSelectedQuery(query)}
                 >
                   <h4 className="font-medium mb-2">{query.title}</h4>
-                  <div className="flex gap-4 text-sm text-gray-600">
+                  <div className="flex flex-wrap gap-2 text-sm text-gray-600">
                     <span>By: {query.userName}</span>
                     <span>{formatDate(query.timestamp)}</span>
                     <span>{query.replies.length} replies</span>
@@ -155,6 +302,8 @@ const QueryForum = ({ user }) => {
                 </li>
               ))}
             </ul>
+          ) : searchTerm ? (
+            <p className="text-gray-500 italic">No questions match your search.</p>
           ) : (
             <p className="text-gray-500 italic">No questions have been posted yet.</p>
           )}
@@ -205,13 +354,15 @@ const QueryForum = ({ user }) => {
                     required
                     rows="3"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-y placeholder:text-center placeholder:leading-[3rem] placeholder:text-gray-400 placeholder:italic"
+                    disabled={loading}
                   />
                   <button 
                     type="submit" 
                     id="post-reply"
-                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 absolute bottom-[-20px] left-[90px]"
+                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 mt-4"
+                    disabled={loading}
                   >
-                    Post Reply
+                    {loading ? 'Posting...' : 'Post Reply'}
                   </button>
                 </form>
               </div>

@@ -27,9 +27,15 @@
     background-color: oklch(0.62 0.22 259.77);
 }
 
+#post-query{
+    background-color: var(--color-blue-500);
+    color: white;
+}
+
 .nav-headings{
     color: white;
 }
+
 
 .post-question-btn{
     background-color: var(--color-blue-500);
