@@ -41,25 +41,27 @@ const FeedbackForm = ({ user }) => {
   };
 
   return (
-    <div className="feedback-container">
-      <h2>Anonymous Faculty Feedback</h2>
-      <p className="feedback-info">
+    <div className="feedabck-form-container max-w-2xl mx-auto mt-24 mb-8 p-8 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center">
+      <h2 className="text-center text-2xl font-bold text-slate-800 mb-6 mt-10">Anonymous Faculty Feedback</h2>
+      
+      <p className="mb-6 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500 w-full">
         Your feedback is completely anonymous. Faculty members will not be able to identify you.
       </p>
       
       {submitted && (
-        <div className="success-message">
+        <div className="mb-6 p-3 bg-green-50 text-green-800 rounded-lg border-l-4 border-green-500 w-full">
           Thank you for your feedback! It has been submitted anonymously.
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Select Faculty:</label>
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="mb-6">
+          <label className="block mb-2 font-medium">Select Faculty:</label>
           <select 
             value={facultyId} 
             onChange={(e) => setFacultyId(e.target.value)}
             required
+            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:border-blue-500 focus:outline-none"
           >
             <option value="">-- Select a faculty member --</option>
             {faculties.map(faculty => (
@@ -70,30 +72,40 @@ const FeedbackForm = ({ user }) => {
           </select>
         </div>
         
-        <div className="form-group">
-          <label>Rating (1-10):</label>
-          <input 
-            type="range" 
-            min="1" 
-            max="10" 
-            value={rating} 
-            onChange={(e) => setRating(parseInt(e.target.value))}
-          />
-          <span className="rating-display">{rating}/10</span>
+        <div className="mb-6">
+          <label className="block mb-2 font-medium">Rating (1-10):</label>
+          <div className="flex items-center">
+            <input 
+              type="range" 
+              min="1" 
+              max="10" 
+              value={rating} 
+              onChange={(e) => setRating(parseInt(e.target.value))}
+              className="w-full"
+            />
+            <span className="ml-4 font-bold">{rating}/10</span>
+          </div>
         </div>
         
-        <div className="form-group">
-          <label>Your Feedback:</label>
+        <div className="mb-6">
+          <label className="block mb-2 font-medium">Your Feedback:</label>
           <textarea 
             value={feedbackText} 
             onChange={(e) => setFeedbackText(e.target.value)}
             placeholder="Please share your honest feedback about the teaching style, content, and overall experience..."
             required
             rows="5"
+            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:border-blue-500 focus:outline-none resize-y"
           />
         </div>
         
-        <button type="submit" id='submit-btn'>Submit Anonymous Feedback</button>
+        <button 
+          type="submit" 
+          id="submit-btn" 
+          className="annonymous-feedback-submit-btn bg-blue-500 text-black border-none py-3 px-6 rounded hover:bg-blue-700 text-base font-medium cursor-pointer -mb-4 "
+        >
+          Submit Anonymous Feedback
+        </button>
       </form>
     </div>
   );

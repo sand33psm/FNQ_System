@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import "../App.css"
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -36,32 +37,49 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="login-wrapper">
-      <div className="login-container">
-        <h2>Faculty Feedback System</h2>
+    <div className="login-container flex justify-center items-center min-h-screen min-w-full bg-gradient-to-br from-blue-500 to-slate-800 p-5m">
+      <div className="w-full max-w-md mx-auto p-10 bg-white rounded-xl shadow-2xl animate-fade-in-up">
+        <h2 className="text-center text-2xl font-bold text-slate-800 mb-8 pb-4 relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-12 after:h-1 after:bg-gradient-to-r after:from-blue-500 after:to-slate-800 after:rounded-md">
+          Faculty Feedback System
+        </h2>
+        
         <form onSubmit={handleSubmit}>
-          {error && <div className="error">{error}</div>}
-          <div className="form-group">
-            <label>Username</label>
+          {error && (
+            <div className="text-red-600 mb-6 p-3 bg-red-50 rounded-lg border-l-4 border-red-600 text-sm">
+              {error}
+            </div>
+          )}
+          
+          <div className="mb-6">
+            <label className="block mb-2 font-semibold text-slate-800">Username</label>
             <input 
               type="text" 
               value={username} 
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               required
             />
           </div>
-          <div className="form-group">
-            <label>Password</label>
+          
+          <div className="mb-6">
+            <label className="block mb-2 font-semibold text-slate-800">Password</label>
             <input 
               type="password" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
+              className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               required
             />
           </div>
-          <button type="submit">Login</button>
+          
+          <button 
+            type="submit"
+            className="w-full mt-2 p-4 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-900 hover:-translate-y-0.5 transition-all duration-300 hover:shadow-lg"
+          >
+            Login
+          </button>
         </form>
       </div>
     </div>
